@@ -30,6 +30,12 @@ module.exports = {
     return out;
   },
 
+  nums(arr, base = 10) {
+    return arr
+      .map((val) => parseInt(val, base))
+      .filter((val) => !isNaN(val));
+  },
+
   sum(arr, base = 10) {
     return arr.reduce((memo, val) => memo + (parseInt(val, base) || 0), 0);
   },
