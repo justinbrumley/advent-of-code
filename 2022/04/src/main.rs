@@ -1,7 +1,7 @@
 use std::fs;
 
 fn main() {
-    let input = fs::read_to_string("./input").expect("Should have been able to read the file");
+    let input = fs::read_to_string("./src/input").expect("Should have been able to read the file");
 
     let split = input.split("\n");
     let lines: Vec<&str> = split.collect();
@@ -36,6 +36,15 @@ fn main() {
         let min2 = sections[0].parse::<i32>().unwrap();
         let max2 = sections[1].parse::<i32>().unwrap();
 
+        /* Part 1 Solution */
+        /*
+        // Check if one pair fully encompasses another
+        if (min1 >= min2 && max1 <= max2) || (min2 >= min1 && max2 <= max1) {
+            overlaps += 1;
+        }
+        */
+
+        /* Part 2 Solution */
         // Check if two sections DON'T overlap, then invert that
         if !(max1 < min2 || min1 > max2) {
             overlaps += 1;
