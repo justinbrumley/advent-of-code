@@ -1,4 +1,4 @@
-const util = require('../../util');
+const util = require('./util');
 
 const run = async () => {
   const lines = await util.getInput();

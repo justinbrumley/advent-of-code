@@ -1,4 +1,4 @@
-const util = require('../../util');
+const util = require('./util');
 
 const Rock = 1;
 const Paper = 2;
