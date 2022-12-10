@@ -1,4 +1,6 @@
-# Advent of Code Solutions
+![aoc](https://user-images.githubusercontent.com/7034681/206863511-e4824a7e-1134-4bec-b837-13323a6ee9dd.png)
+
+# Solutions
 
 ## 2022
 
