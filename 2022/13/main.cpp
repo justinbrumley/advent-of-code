@@ -41,20 +41,23 @@ int compare(ListOrInt a, ListOrInt b) {
     ListOrInt aVal = get(a.values, i);
     ListOrInt bVal = get(b.values, i);
 
+    // First check if both values are numbers
+    // If they are, just compare them
     if (!aVal.isList && !bVal.isList) {
-      // cout << "Comparing a and b values: " << aVal.value << " " << bVal.value << endl;
-
       if (aVal.value < bVal.value) {
         return -1;
       } else if (aVal.value > bVal.value) {
         return 1;
       }
 
+      // If numbers are equal, move on to the next list item
       continue;
     }
 
+    // If values are mixed types,
+    // convert the one that is a number to a list
+    // with that number as the only item in the list
     if (aVal.isList && !bVal.isList) {
-      // cout << "Converting b to list " << bVal.value << endl;
       ListOrInt newItem;
       newItem.isList = false;
       newItem.value = bVal.value;
@@ -62,7 +65,6 @@ int compare(ListOrInt a, ListOrInt b) {
       bVal.isList = true;
       bVal.values.push_back(newItem);
     } else if (!aVal.isList && bVal.isList) {
-      // cout << "Converting a to list " << aVal.value << endl;
       ListOrInt newItem;
       newItem.isList = false;
       newItem.value = aVal.value;
@@ -71,8 +73,8 @@ int compare(ListOrInt a, ListOrInt b) {
       aVal.values.push_back(newItem);
     }
 
+    // If both values are lists, recursively compare them.
     if (aVal.isList && bVal.isList) {
-      // cout << "Recursively comparing two lists" << endl;
       int comparison = compare(aVal, bVal);
       if (comparison != 0) {
         return comparison;
@@ -80,13 +82,14 @@ int compare(ListOrInt a, ListOrInt b) {
     }
   }
 
-  // Fallback: check lengths of arrays
+  // Final check, compare the lengths of arrays
   if (a.values.size() < b.values.size()) {
     return -1;
   } else if (a.values.size() > b.values.size()) {
     return 1;
   }
 
+  // If we reach here, then the lists are identical
   return 0;
 }
 
@@ -99,7 +102,6 @@ int main() {
   }
 
   list<string> lines;
-
   string line;
   while (getline(input_file, line)) {
     lines.push_back(line);
@@ -115,11 +117,7 @@ int main() {
 
   for (const string& line : lines) {
     // Skip blank lines
-    if (line == "") {
-      continue;
-    }
-
-    // cout << line << endl;
+    if (line == "") { continue; }
 
     // Each row is itself a list
     ListOrInt item;
@@ -135,41 +133,48 @@ int main() {
     for (int i = 1; i < line.size() - 1; i++) {
       char ch = line.at(i);
 
-      if (ch == ',' || ch == '\n') {
-        // Do nothing, just move on to next character
-        continue;
-      }
+      // Do nothing, just move on to next character
+      if (ch == ',') { continue; }
 
-      if (ch == '[') {
-        // Start of a new nested list
-        ListOrInt* currItem = stack.back();
+      switch (ch) {
+        case '[': {
+          // Start of a new nested list
+          ListOrInt* currItem = stack.back();
 
-        ListOrInt newItem;
-        newItem.isList = true;
+          ListOrInt newItem;
+          newItem.isList = true;
 
-        // Add list to current list
-        currItem->values.push_back(newItem);
+          // Add list to current list
+          currItem->values.push_back(newItem);
 
-        // Then switch pointer to new list
-        stack.push_back(&(currItem->values.back()));
-      } else if (ch == ']') {
-        // End of current list, jump back to parent
-        stack.pop_back();
-      } else {
-        // Parse number up to next comma or close bracket
-        string s = line.substr(i);
-        string num = s.substr(0, min(s.find(","), s.find("]")));
+          // Then switch pointer to new list
+          stack.push_back(&(currItem->values.back()));
 
-        ListOrInt newItem;
-        newItem.isList = false;
-        newItem.value = stoi(num);
+          break;
+        }
 
-        ListOrInt* currItem = stack.back();
+        case ']': {
+          // End of current list, jump back to parent
+          stack.pop_back();
+          break;
+        }
 
-        currItem->values.push_back(newItem);
+        default: {
+          // Parse number up to next comma or close bracket
+          string s = line.substr(i);
+          string num = s.substr(0, min(s.find(","), s.find("]")));
 
-        // Skip over the next n - 1 characters
-        i += num.size() - 1;
+          ListOrInt newItem;
+          newItem.isList = false;
+          newItem.value = stoi(num);
+
+          ListOrInt* currItem = stack.back();
+
+          currItem->values.push_back(newItem);
+
+          // Skip over the next n - 1 characters
+          i += num.size() - 1;
+        }
       }
     }
 
@@ -189,10 +194,7 @@ int main() {
 
   // Part Two
   // Start by sorting the list
-  rows.sort([](ListOrInt a, ListOrInt b) {
-    int comparison = compare(a, b);
-    return comparison < 0;
-  });
+  rows.sort([](ListOrInt a, ListOrInt b) { return compare(a, b) < 0; });
 
   // Now find the indices of the two separate elements
   // and multiply them together
