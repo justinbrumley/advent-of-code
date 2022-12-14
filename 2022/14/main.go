@@ -40,6 +40,8 @@ func NewGrid() *Grid {
 		Points:  make(map[string]*Point),
 		Ceiling: 0,
 		Floor:   0,
+		Left:    100000,
+		Right:   -100000,
 	}
 }
 
@@ -132,8 +134,6 @@ func (g *Grid) DropSand() bool {
 	}
 
 	for {
-		// intoTheAbyss := true
-
 		// Part Two
 		// Check if next tile down is the floor and stop if so
 		if sand.Y+1 >= g.Floor {
