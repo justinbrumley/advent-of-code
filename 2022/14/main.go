@@ -85,6 +85,11 @@ func (g *Grid) DrawGridAroundPoint(p *Point) {
 				continue
 			}
 
+			if y >= g.Floor || y < 0 {
+				line += " "
+				continue
+			}
+
 			p := g.GetPoint(x, y)
 			if p == nil {
 				line += "."
