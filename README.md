@@ -2,6 +2,14 @@
 
 # Solutions
 
+## 2023
+
+[Day 1 - Go](https://github.com/justinbrumley/advent-of-code/tree/main/2023/01)
+
+[Day 2 - Go](https://github.com/justinbrumley/advent-of-code/tree/main/2023/02)
+
+[Day 3 - Go](https://github.com/justinbrumley/advent-of-code/tree/main/2023/03)
+
 ## 2022
 
 [Day 1 - Javascript](https://github.com/justinbrumley/advent-of-code/tree/main/2022/01)
