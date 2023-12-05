@@ -133,23 +133,25 @@ func main() {
 		if seed, err := strconv.Atoi(string(val)); err == nil {
 			if start == -1 {
 				start = seed
-			} else {
-				for i := start; i < start+seed; i++ {
-					result := i
+				continue
+			}
 
-					for _, m := range maps {
-						// Check if current value falls with range of any conversion sets
-						result = m.Convert(result)
-					}
+			// Loop over entire range, convert, and track lowest destination found
+			for i := start; i < start+seed; i++ {
+				result := i
 
-					// Final Destination™
-					if destination == 0 || result < destination {
-						destination = result
-					}
+				for _, m := range maps {
+					// Check if current value falls with range of any conversion sets
+					result = m.Convert(result)
 				}
 
-				start = -1
+				// Final Destination™
+				if destination == 0 || result < destination {
+					destination = result
+				}
 			}
+
+			start = -1
 		}
 	}
 
