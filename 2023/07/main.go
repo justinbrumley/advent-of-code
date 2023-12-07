@@ -135,25 +135,6 @@ func (h *Hand) IsOnePair() bool {
 	return pairs > 0
 }
 
-func (h *Hand) GetHandType() string {
-	switch h.GetStrength() {
-	case 6:
-		return "Five of a Kind"
-	case 5:
-		return "Four of a Kind"
-	case 4:
-		return "Full House"
-	case 3:
-		return "Three of a Kind"
-	case 2:
-		return "Two Pair"
-	case 1:
-		return "One Pair"
-	default:
-		return "High Card"
-	}
-}
-
 func (h *Hand) GetStrength() int {
 	if h.IsFiveOfAKind() {
 		return 6
@@ -253,7 +234,6 @@ func main() {
 	})
 
 	winnings := 0
-
 	for i, hand := range hands {
 		winnings += (i + 1) * hand.Bet
 	}
