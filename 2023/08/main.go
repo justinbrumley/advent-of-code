@@ -68,6 +68,36 @@ func findByValue(locations []*Location, value string) *Location {
 	return nil
 }
 
+func isFilled(values []int) bool {
+	for _, val := range values {
+		if val == 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func GCD(a, b int) int {
+	for b != 0 {
+		t := b
+		b = a % b
+		a = t
+	}
+
+	return a
+}
+
+func LCM(values []int) int {
+	result := 1
+
+	for _, val := range values {
+		result = result * val / GCD(result, val)
+	}
+
+	return result
+}
+
 func main() {
 	lines := getInput()
 	seq := bytes.Split(lines[0], []byte(""))
@@ -88,8 +118,10 @@ func main() {
 
 	fmt.Printf("Processing from %v starting nodes...\n", len(nodes))
 
-	for {
+	for !isFilled(paths) {
 		for _, dir := range seq {
+			steps++
+
 			for i, node := range nodes {
 				if string(dir) == "L" {
 					nodes[i] = node.LeftLocation
@@ -98,12 +130,16 @@ func main() {
 				}
 
 				if strings.HasSuffix(nodes[i].Value, "Z") && paths[i] == 0 {
-					paths[i] = steps + 1
+					paths[i] = steps
 				}
 			}
-
-			steps++
-			fmt.Printf("paths: %v\n", paths)
 		}
 	}
+
+	fmt.Printf("Paths: %v\n", paths)
+
+	// Get LCM of all paths
+	lcm := LCM(paths)
+
+	fmt.Printf("LCM: %v\n", lcm)
 }
