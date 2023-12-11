@@ -22,26 +22,11 @@ type Point struct {
 	Value string
 }
 
-func (p *Point) IsCorner() bool {
-	for _, pipe := range Pipes[2:] {
-		if pipe == p.Value {
-			return true
-		}
-	}
-
-	return false
-}
-
 type Bounds struct {
 	Left   int
 	Right  int
 	Top    int
 	Bottom int
-}
-
-type Side struct {
-	P1 *Point
-	P2 *Point
 }
 
 var lines [][]byte
@@ -143,64 +128,56 @@ func GetNextPoint(previous, current *Point) *Point {
 	return nil
 }
 
-func GetBounds(points []*Point) *Bounds {
-	left := -1
-	right := -1
-	top := -1
-	bottom := -1
-
-	for _, point := range points {
-		if left == -1 || point.X < left {
-			left = point.X
-		}
-
-		if right == -1 || point.X > right {
-			right = point.X
-		}
-
-		if top == -1 || point.Y < top {
-			top = point.Y
-		}
-
-		if bottom == -1 || point.Y > bottom {
-			bottom = point.Y
-		}
-	}
-
-	return &Bounds{
-		Top:    top,
-		Bottom: bottom,
-		Left:   left,
-		Right:  right,
-	}
+func (p *Point) PointsUp() bool {
+	return p != nil && (p.Value == "|" || p.Value == "J" || p.Value == "L")
 }
 
 // IsEnclosed checks if the provided point is enclosed in the loop
-func (p *Point) IsEnclosed(sides []*Side) bool {
-	// D = (x2 - x1) * (yp - y1) - (xp - x1) * (y2 - y1)
-	prev := 0
+func (p *Point) IsEnclosed(loop []*Point) bool {
+	isInside := false
 
-	// 2, 6
-
-	for _, s := range sides {
-		d := (s.P2.X-s.P1.X)*(p.Y-s.P1.Y) - (p.X-s.P1.X)*(s.P2.Y-s.P1.Y)
-
-		if p.X == 2 && p.Y == 6 {
-			fmt.Printf("D Value (%v) for (%v, %v) -> (%v, %v)\n", d, s.P1.X, s.P1.Y, s.P2.X, s.P2.Y)
-		}
-
-		if prev == 0 {
-			prev = d
-		} else if d < 0 && prev > 0 {
-			// fmt.Printf("(%v, %v) Values on wrong side: %v and %v\n", p.X, p.Y, d, prev)
-			return false
-		} else if d > 0 && prev < 0 {
-			// fmt.Printf("(%v, %v), Values on wrong side: %v and %v\n", p.X, p.Y, d, prev)
-			return false
+	for _, point := range loop {
+		if point.Y == p.Y && point.X < p.X && point.PointsUp() {
+			isInside = !isInside
 		}
 	}
 
-	return true
+	return isInside
+}
+
+func (p *Point) IsValidPipe() bool {
+	above := GetPointAt(p.X, p.Y-1)
+	below := GetPointAt(p.X, p.Y+1)
+	left := GetPointAt(p.X-1, p.Y)
+	right := GetPointAt(p.X+1, p.Y)
+
+	connectsUp := above != nil && (above.Value == "|" || above.Value == "F" || above.Value == "7")
+	connectsDown := below != nil && (below.Value == "|" || below.Value == "J" || below.Value == "L")
+
+	connectsLeft := left != nil && (left.Value == "-" || left.Value == "F" || left.Value == "L")
+	connectsRight := right != nil && (right.Value == "-" || right.Value == "J" || right.Value == "7")
+
+	switch p.Value {
+	case "|":
+		return connectsUp && connectsDown
+
+	case "-":
+		return connectsLeft && connectsRight
+
+	case "J":
+		return connectsLeft && connectsUp
+
+	case "7":
+		return connectsLeft && connectsDown
+
+	case "L":
+		return connectsRight && connectsUp
+
+	case "F":
+		return connectsRight && connectsDown
+	}
+
+	return false
 }
 
 func main() {
@@ -208,7 +185,6 @@ func main() {
 	startPoint := GetStartPoint()
 
 	var loop []*Point
-	var sides []*Side
 
 	// Loop over possible pipes to look for largest loop
 	for _, pipe := range Pipes {
@@ -219,70 +195,53 @@ func main() {
 			Value: pipe,
 		}
 
-		seq = append(seq, GetNextPoint(nil, seq[0]))
-
-		s := make([]*Side, 0)
-		sideStart := seq[0]
-
-		if seq[len(seq)-1].IsCorner() {
-			s = append(s, &Side{
-				P1: sideStart,
-				P2: seq[len(seq)-1],
-			})
-
-			sideStart = seq[len(seq)-1]
+		if !seq[0].IsValidPipe() {
+			continue
 		}
 
-		for seq[len(seq)-1].Value != "S" {
+		seq = append(seq, GetNextPoint(nil, seq[0]))
+
+		for {
 			prev := seq[len(seq)-2]
 			curr := seq[len(seq)-1]
 			next := GetNextPoint(prev, curr)
 
-			if next == nil {
+			if next == nil || next.Value == "S" {
 				break
 			}
 
 			seq = append(seq, next)
-
-			if next.IsCorner() {
-				s = append(s, &Side{
-					P1: sideStart,
-					P2: seq[len(seq)-1],
-				})
-
-				sideStart = seq[len(seq)-1]
-			}
 		}
 
 		if len(seq) > len(loop) {
 			loop = seq
-			sides = s
+			startPoint.Value = pipe
 		}
 	}
 
 	fmt.Printf("Further point on loop: %v\n", len(loop)/2)
 
-	fmt.Printf("Sides (%v):\n", len(sides))
-	for _, s := range sides {
-		fmt.Printf("(%v, %v) -> (%v, %v)\n", s.P1.X, s.P1.Y, s.P2.X, s.P2.Y)
-	}
-
-	// Calculate all points inclosed in the loop.
-	// Start at top/left corner and go to bottom/right
-	bounds := GetBounds(loop)
 	enclosedPoints := 0
 
 	// Look for dots surrounded by unequal amount of pipes
-	for x := bounds.Left; x <= bounds.Right; x++ {
-		for y := bounds.Top; y <= bounds.Bottom; y++ {
+	for y := 0; y < len(lines); y++ {
+		for x := 0; x < len(lines[y]); x++ {
 			point := &Point{
 				X:     x,
 				Y:     y,
 				Value: string(lines[y][x]),
 			}
 
-			if point.Value == "." && point.IsEnclosed(sides) {
-				// fmt.Printf("Enclosed point at %v, %v\n", point.X, point.Y)
+			// Ignore pipes connects to loop.
+			// We only care about ground + junk pipes.
+			inLoop := false
+			for _, p := range loop {
+				if p.X == point.X && p.Y == point.Y {
+					inLoop = true
+				}
+			}
+
+			if !inLoop && point.IsEnclosed(loop) {
 				enclosedPoints++
 			}
 		}
