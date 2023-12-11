@@ -20,23 +20,25 @@ func Abs(val int) int {
 	return val
 }
 
+const SpaceMultiplier = 1_000_000
+
 func (p *Point) DistanceTo(other *Point, expandedRows, expandedCols []int) int {
 	distance := 0
 
 	// Loop over expanded rows to add 1 million to distance
 	for _, row := range expandedRows {
 		if p.Y > other.Y && row < p.Y && row > other.Y {
-			distance += (1_000_000 - 1) // Minus 1 to account for math below
+			distance += (SpaceMultiplier - 1) // Minus 1 to account for math below
 		} else if p.Y < other.Y && row > p.Y && row < other.Y {
-			distance += (1_000_000 - 1) // Minus 1 to account for math below
+			distance += (SpaceMultiplier - 1) // Minus 1 to account for math below
 		}
 	}
 
 	for _, col := range expandedCols {
 		if p.X > other.X && col < p.X && col > other.X {
-			distance += (1_000_000 - 1) // Minus 1 to account for math below
+			distance += (SpaceMultiplier - 1) // Minus 1 to account for math below
 		} else if p.X < other.X && col > p.X && col < other.X {
-			distance += (1_000_000 - 1) // Minus 1 to account for math below
+			distance += (SpaceMultiplier - 1) // Minus 1 to account for math below
 		}
 	}
 
@@ -88,9 +90,7 @@ func ExpandUniverse(lines [][]byte) ([][]byte, []int, []int) {
 		}
 
 		if isEmpty {
-			// Replace row with * to represent 1mil
 			expandedRows = append(expandedRows, y)
-			// lines[y] = bytes.Repeat([]byte("*"), len(line))
 		}
 	}
 
@@ -105,14 +105,7 @@ func ExpandUniverse(lines [][]byte) ([][]byte, []int, []int) {
 		}
 
 		if isEmpty {
-			expandedCols = append(expandedRows, x)
-
-			// Replace column with * to represent 1mil
-			/*
-				for y, _ := range lines {
-					lines[y][x] = byte('*')
-				}
-			*/
+			expandedCols = append(expandedCols, x)
 		}
 	}
 
@@ -124,6 +117,9 @@ func main() {
 
 	// Add a bunch of empty "space"
 	lines, expandedRows, expandedCols := ExpandUniverse(lines)
+
+	fmt.Printf("Expanded rows: %v\n", expandedRows)
+	fmt.Printf("Expanded columns: %v\n", expandedCols)
 
 	// Build galaxy map
 	galaxies := make([]*Point, 0)
