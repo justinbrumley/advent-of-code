@@ -19,7 +19,7 @@ func NewGrid(rows, cols [][]byte) *Grid {
 	}
 }
 
-func (g *Grid) GetReflectionRow() int {
+func (g *Grid) GetReflectionRow(ignore int) int {
 	// For every row...
 	for i, row := range g.Rows {
 		if i == len(g.Rows)-1 {
@@ -27,7 +27,7 @@ func (g *Grid) GetReflectionRow() int {
 		}
 
 		// Check if next row matches
-		if string(row) != string(g.Rows[i+1]) {
+		if i == ignore || string(row) != string(g.Rows[i+1]) {
 			continue
 		}
 
@@ -59,7 +59,7 @@ func (g *Grid) GetReflectionRow() int {
 	return -1
 }
 
-func (g *Grid) GetReflectionCol() int {
+func (g *Grid) GetReflectionCol(ignore int) int {
 	// For every col...
 	for i, col := range g.Cols {
 		if i == len(g.Cols)-1 {
@@ -67,7 +67,7 @@ func (g *Grid) GetReflectionCol() int {
 		}
 
 		// Check if next col matches
-		if string(col) != string(g.Cols[i+1]) {
+		if i == ignore || string(col) != string(g.Cols[i+1]) {
 			continue
 		}
 
@@ -148,8 +148,8 @@ func main() {
 	sum := 0
 
 	for _, grid := range grids {
-		originalRow := grid.GetReflectionRow()
-		originalCol := grid.GetReflectionCol()
+		originalRow := grid.GetReflectionRow(-1)
+		originalCol := grid.GetReflectionCol(-1)
 
 		done := false
 
@@ -159,10 +159,6 @@ func main() {
 			}
 
 			for j, _ := range grid.Cols {
-				if done {
-					break
-				}
-
 				// Flip value and i, j and check for reflections
 				b := grid.Rows[i][j]
 
@@ -174,17 +170,17 @@ func main() {
 					grid.Cols[j][i] = '#'
 				}
 
-				reflectionCol := grid.GetReflectionCol()
+				reflectionCol := grid.GetReflectionCol(originalCol)
 
-				if reflectionCol >= 0 && reflectionCol != originalCol {
+				if reflectionCol >= 0 {
 					sum += reflectionCol + 1
 					done = true
 					break
 				}
 
-				reflectionRow := grid.GetReflectionRow()
+				reflectionRow := grid.GetReflectionRow(originalRow)
 
-				if reflectionRow >= 0 && reflectionRow != originalRow {
+				if reflectionRow >= 0 {
 					sum += (reflectionRow + 1) * 100
 					done = true
 					break
