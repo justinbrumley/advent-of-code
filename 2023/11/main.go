@@ -20,7 +20,7 @@ func Abs(val int) int {
 	return val
 }
 
-const SpaceMultiplier = 1_000_000
+const SpaceMultiplier = 1e6
 
 func (p *Point) DistanceTo(other *Point, expandedRows, expandedCols []int) int {
 	distance := 0
