@@ -89,16 +89,6 @@ func (g *Grid) GetTotalLoad() int {
 
 // Rotate the grid clockwise (north, west, south, east)
 func (g *Grid) Rotate() {
-	/*
-		[1,2,3]
-		[4,5,6]
-		[7,8,9]
-
-		[7,4,1]
-		[8,5,2]
-		[9,6,3]
-	*/
-
 	newValues := make([][]byte, 0)
 
 	// Loop over columns, reversed to get new rows
@@ -150,16 +140,25 @@ func ContainsLoop(snapshots [][]byte) bool {
 	return false
 }
 
-func GetLoopLength(snapshots [][]byte) int {
+func GetLoop(snapshots [][]byte) ([][]byte, int, int) {
+	start := -1
+	end := -1
+
 	for i, snapshot := range snapshots {
+		if start > -1 {
+			break
+		}
+
 		for j := i + 1; j < len(snapshots); j++ {
 			if string(snapshot) == string(snapshots[j]) {
-				return j - i
+				start = i
+				end = j
+				break
 			}
 		}
 	}
 
-	return -1
+	return snapshots[start:end], start, end
 }
 
 func main() {
@@ -189,24 +188,17 @@ func main() {
 
 		// Store snapshot to track loops
 		snapshots = append(snapshots, bytes.Join(grid.Values, []byte("\n")))
-		if ContainsLoop(snapshots) {
+		if ContainsLoop(snapshots) && i > 20 {
 			break
 		}
 	}
 
-	// Rebuild grid using snapshot
-	loopLength := GetLoopLength(snapshots)
-	offset := len(snapshots) - loopLength
-	idx := (1e9 - offset - 1) % loopLength
+	loop, start, _ := GetLoop(snapshots)
+	idx := (1e9 - start - 1) % len(loop)
 
-	fmt.Printf("Offset, Loop length: %v %v\n", offset, loopLength)
-	fmt.Printf("Index of final grid: %v\n", idx)
-
-	for i := offset; i < offset+loopLength; i++ {
-		g := &Grid{
-			Values: bytes.Split(snapshots[i], []byte("\n")),
-		}
-
-		fmt.Printf("Snapshot #%v load: %v\n", i, g.GetTotalLoad())
+	finalGrid := &Grid{
+		Values: bytes.Split(loop[idx], []byte("\n")),
 	}
+
+	fmt.Printf("1,000,000,000th load: %v\n", finalGrid.GetTotalLoad())
 }
