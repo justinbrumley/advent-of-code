@@ -82,7 +82,11 @@ var day2Cmd = &cobra.Command{
 	Use:   "day2",
 	Short: "Advent of Code 2024 - Day 2",
 	Run: func(cmd *cobra.Command, args []string) {
-		lines, err := utils.GetInput("inputs/day2")
+		if len(args) < 1 {
+			log.Fatal("Missing required argument: <input_file>")
+		}
+
+		lines, err := utils.GetInput(args[0])
 		if err != nil {
 			log.Fatal(err)
 		}
