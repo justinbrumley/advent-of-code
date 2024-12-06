@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/justinbrumley/advent-of-code/2024/utils"
 	"github.com/spf13/cobra"
@@ -14,16 +15,24 @@ type Vector struct {
 }
 
 type Lab struct {
-	Grid          [][]byte
-	GuardPosition *Vector
-	GuardVelocity *Vector
+	Grid                    [][]byte
+	GuardPosition           *Vector
+	GuardVelocity           *Vector
+	PositionVelocityHistory []string
+}
+
+func (l *Lab) PrintGrid() {
+	for _, line := range l.Grid {
+		fmt.Println(string(line))
+	}
 }
 
 // Moves the guard in the direction they are currently facing.
 // If the guard can't move forward, they rotate 90deg and try again.
-// If the guard moves off the map entirely, returns false.
 // This will also replace the previous space with an X to track where the guard has been.
-func (l *Lab) MoveGuard() bool {
+// First return value is whether or not the guard has left the map.
+// Second return value is whether a loop has been detected.
+func (l *Lab) MoveGuard() (bool, bool) {
 	// Get a vector for the next guard position
 	next := &Vector{
 		X: l.GuardPosition.X + l.GuardVelocity.X,
@@ -33,14 +42,30 @@ func (l *Lab) MoveGuard() bool {
 	// Update current position with X
 	l.Grid[l.GuardPosition.Y][l.GuardPosition.X] = 'X'
 
+	// If next position is already an 'X', then check if we have looped
+	key := fmt.Sprintf("%v,%v:%v,%v", l.GuardPosition.X, l.GuardPosition.Y, l.GuardVelocity.X, l.GuardVelocity.Y)
+
 	// Check if guard moved off the map
-	if next.X < 0 || next.Y < 0 || next.Y > len(l.Grid) || next.X > len(l.Grid[next.Y]) {
+	if next.X < 0 || next.Y < 0 || next.Y >= len(l.Grid) || next.X >= len(l.Grid[next.Y]) {
 		// If so, then we are done and guard has left
-		return false
+		return true, false
 	}
 
-	// Check if next move is even viable
 	nextChar := l.Grid[next.Y][next.X]
+
+	if nextChar == 'X' {
+		// We'll know we've looped if entry in VelocityMap already exists
+		for _, record := range l.PositionVelocityHistory {
+			if record == key {
+				return true, true
+			}
+		}
+	}
+
+	// Track next position + current velocity for checking for loop later
+	l.PositionVelocityHistory = append(l.PositionVelocityHistory, key)
+
+	// Check if next move is even viable
 	if nextChar == '#' {
 		// Rotate 90deg, and try to move again
 		vel := l.GuardVelocity
@@ -58,9 +83,8 @@ func (l *Lab) MoveGuard() bool {
 		return l.MoveGuard()
 	}
 
-	// Successful move, so update position and return true
 	l.GuardPosition = next
-	return true
+	return false, false
 }
 
 func (l *Lab) GetDistinctGuardSpots() int {
@@ -86,7 +110,6 @@ func (l *Lab) FindGuard() {
 	for y, line := range l.Grid {
 		for x, char := range line {
 			if char == '^' || char == '>' || char == '<' || char == 'v' {
-				fmt.Printf("Found the guard: %v, %v\n", x, y)
 				l.GuardPosition.X = x
 				l.GuardPosition.Y = y
 
@@ -110,11 +133,32 @@ func (l *Lab) FindGuard() {
 	}
 }
 
+// Reset grid back to starting state using input, and reset guard position/velocity.
+func (l *Lab) Reset(lines []string) {
+	l.Grid = make([][]byte, 0)
+
+	for _, line := range lines {
+		l.Grid = append(l.Grid, []byte(line))
+	}
+
+	l.FindGuard()
+	l.PositionVelocityHistory = make([]string, 0)
+}
+
+func timer(name string) func() {
+	start := time.Now()
+	return func() {
+		fmt.Printf("%s took %v\n", name, time.Since(start))
+	}
+}
+
 // day6Cmd represents the day6 command
 var day6Cmd = &cobra.Command{
 	Use:   "day6",
 	Short: "Advent of Code 2024 - Day 6",
 	Run: func(cmd *cobra.Command, args []string) {
+		defer timer("day6")()
+
 		if len(args) < 1 {
 			log.Fatal("Missing required argument: <input_file>")
 		}
@@ -125,23 +169,57 @@ var day6Cmd = &cobra.Command{
 		}
 
 		// Build the lab
-		lab := &Lab{
-			Grid: make([][]byte, 0),
-		}
-
-		for _, line := range lines {
-			lab.Grid = append(lab.Grid, []byte(line))
-		}
+		lab := &Lab{}
+		lab.Reset(lines)
 
 		// Find the guard starting position, and direction.
 		// The guard can be represented by v, >, <, or ^
 		lab.FindGuard()
 
 		// Move until the guard is gone
-		for lab.MoveGuard() {
+		for true {
+			left, looped := lab.MoveGuard()
+
+			if left || looped {
+				break
+			}
 		}
 
 		fmt.Printf("Number of distinct positions of the guard: %v\n", lab.GetDistinctGuardSpots())
+
+		// Part 2, try to block the guard in and count # of loops
+		loopCount := 0
+
+		// Start by resetting state back to beginning
+		lab.Reset(lines)
+
+		for y := 0; y < len(lab.Grid); y++ {
+			for x := 0; x < len(lab.Grid[y]); x++ {
+				char := lab.Grid[y][x]
+
+				// Can only add new obstactles on empty tiles
+				if char == '.' {
+					lab.Grid[y][x] = '#'
+
+					// Loop and move the guard to check for loop or leaving map
+					for true {
+						left, looped := lab.MoveGuard()
+
+						if looped {
+							loopCount++
+						}
+
+						if left || looped {
+							// Reset once done
+							lab.Reset(lines)
+							break
+						}
+					}
+				}
+			}
+		}
+
+		fmt.Printf("Number of possible loops: %v\n", loopCount)
 	},
 }
 
