@@ -2,7 +2,10 @@ module github.com/justinbrumley/advent-of-code/2025
 
 go 1.23.3
 
-require github.com/spf13/cobra v1.8.1
+require (
+	github.com/glenn-brown/golang-pkg-pcre v0.0.0-20120522223659-48bb82a8b8ce
+	github.com/spf13/cobra v1.8.1
+)
 
 require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
